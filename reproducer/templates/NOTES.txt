@@ -1,0 +1,7 @@
+{{- if .Release.IsInstall }}
+The reproducer chart has been installed successfully from the chart {{ .Chart.Name }}.
+{{- else }}
+The reproducer chart has been upgraded successfully from the chart {{ .Chart.Name }}.
+{{- end }}
+* Helm release name: {{ .Release.Name | quote }}
+* Namespace: {{ .Release.Namespace | quote }}

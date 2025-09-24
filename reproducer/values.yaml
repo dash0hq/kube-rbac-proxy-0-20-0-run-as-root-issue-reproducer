@@ -1,0 +1,10 @@
+reproducer:
+  kubeRbacProxyImage:
+    repository: "quay.io/brancz/kube-rbac-proxy"
+
+    # Version 0.19.1 works as expected:
+    # tag: "v0.19.1"
+
+    # Version 0.20.0 fails to start:
+    tag: "v0.20.0"
+

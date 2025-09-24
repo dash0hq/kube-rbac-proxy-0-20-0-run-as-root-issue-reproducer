@@ -1,0 +1,90 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reproducer-deployment
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: reproducer
+      app.kubernetes.io/component: main
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: kube-rbac-proxy
+      labels:
+        app.kubernetes.io/name: reproducer
+        app.kubernetes.io/component: main
+    spec:
+      containers:
+
+      - name: kube-rbac-proxy
+        image: {{ include "reproducer.kubeRbacProxyImage" . | quote }}
+        args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=0
+        ports:
+        - containerPort: 8443
+          name: https
+          protocol: TCP
+        securityContext:
+          runAsNonRoot: true
+      securityContext:
+        runAsNonRoot: true
+      serviceAccountName: {{ template "reproducer.serviceAccountName" . }}
+      automountServiceAccountToken: true
+      terminationGracePeriodSeconds: 10
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "reproducer.chartName" . }}-proxy-role
+  labels:
+    app.kubernetes.io/name: reproducer
+    app.kubernetes.io/component: main
+    app.kubernetes.io/instance: proxy-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ template "reproducer.chartName" . }}-proxy-rolebinding
+  labels:
+    app.kubernetes.io/name: reproducer
+    app.kubernetes.io/component: proxy
+    app.kubernetes.io/instance: role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: reproducer-proxy-role
+subjects:
+- kind: ServiceAccount
+  name: {{ template "reproducer.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ template "reproducer.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: reproducer
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: service-account
+

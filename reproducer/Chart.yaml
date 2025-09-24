@@ -1,0 +1,8 @@
+apiVersion: v2
+name: reproducer
+version: "1.0.0"
+type: application
+maintainers:
+  - name: Bastian Krol
+    email: bastian.krol@dash0.com
+appVersion: "1.0.0"
